@@ -23,6 +23,19 @@ class NamedTextbox(Frame):
 		self.entry.insert(0, text)
 		self.entry.config(state = self.state)
 
+class StatisticOutput(NamedTextbox):
+	def __init__(self, *args, **kwargs):
+		#kwargs["fieldbackground"] = [ ( "readonly", "lime" ), ( "disabled", "red" ) ]
+		super().__init__(*args, **kwargs)
+
+	def put(self, val):
+		self.entry.config(state = "normal")
+		self.entry.delete(0, END)
+		self.entry.insert(0, val)
+		#self.entry.config(bg = ("lime" if val <= 1.82 else "red"))
+		self.entry.config(readonlybackground = ("lime" if val <= 1.82 else "red"))
+		self.entry.config(state = "readonly")
+
 class app(Tk):
 	class generator(LabelFrame):
 		def __init__(self, *args, **kwargs):
@@ -65,6 +78,7 @@ class app(Tk):
 
 		def action(self):
 			m = self.field_m.get()
+			self.master.master.frame_frequency.put(1, 2)
 			# TODO: generator func
 
 		def put(self, text):
@@ -76,7 +90,19 @@ class app(Tk):
 	class frequency(LabelFrame):
 		def __init__(self, *args, **kwargs):
 			kwargs["text"] = "Частотный тест"
-			super().__init__(*args, **kwargs)	
+			super().__init__(*args, **kwargs)
+
+			# Содержимое блока
+			self.field_sn = NamedTextbox(self, text = "Sn", state = "readonly")
+			self.field_sn.pack()
+
+			self.field_s = StatisticOutput(self, text = "S", state = "readonly")
+			self.field_s.pack(pady = 5)
+
+		def put(self, sn, s):
+			# Установить поля Sn и S одной командой
+			self.field_sn.put(sn)
+			self.field_s.put(s)
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -90,7 +116,7 @@ class app(Tk):
 		self.frame_generator = self.generator(self.frame_root)
 		self.frame_generator.pack(padx = 5, ipadx = 5, ipady = 10)
 
-		#self.frame_frequency = self.frequency(self.frame_root)
-		#self.frame_frequency.pack(padx = 5, pady = 5, ipadx = 5, ipady = 10)
+		self.frame_frequency = self.frequency(self.frame_root)
+		self.frame_frequency.pack(padx = 5, pady = 5, ipadx = 5, ipady = 10)
 
 if __name__ == "__main__": app().mainloop()
