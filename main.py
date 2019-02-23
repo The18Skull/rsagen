@@ -1,5 +1,14 @@
+import re
 from tkinter import *
-from tkinter import ttk
+from tkinter import messagebox
+
+def gcd(a, b):
+	while a != b:
+		if a > b:
+			a = a - b
+		else:
+			b = b - a        
+	return a
 
 class NamedTextbox(Frame):
 	def __init__(self, *args, **kwargs):
@@ -41,56 +50,92 @@ class app(Tk):
 		def __init__(self, *args, **kwargs):
 			kwargs["text"] = "RSA генератор"
 			super().__init__(*args, **kwargs)
+			self.root = self.master.root
 
 			# Блок ввода параметров генератора
 			self.frame_input = Frame(self)
-			self.frame_input.pack(side = LEFT, padx = 5)
+			self.frame_input.pack()
+
+			self.frame_left = Frame(self.frame_input)
+			self.frame_left.pack(side = LEFT)
+
+			self.frame_right = Frame(self.frame_input)
+			self.frame_right.pack(side = LEFT)
 
 			# Содержимое блока
-			self.field_m = NamedTextbox(self.frame_input, text = "m", state = "normal")
+			self.field_m = NamedTextbox(self.frame_left, text = "m", state = "normal")
 			self.field_m.pack()
 
-			self.button_generate = Button(self.frame_input, text = "Сгенерировать", command = self.action)
-			self.button_generate.pack(pady = 5)
+			self.field_p = NamedTextbox(self.frame_left, text = "p", state = "normal")
+			self.field_p.pack(pady = 5)
 
-			self.field_p = NamedTextbox(self.frame_input, text = "p", state = "readonly")
-			self.field_p.pack()
+			self.field_q = NamedTextbox(self.frame_left, text = "q", state = "normal")
+			self.field_q.pack()
 
-			self.field_q = NamedTextbox(self.frame_input, text = "q", state = "readonly")
-			self.field_q.pack(pady = 5)
+			#self.field_phi = NamedTextbox(self.frame_input, text = "phi", state = "normal")
+			#self.field_phi.pack()
 
-			self.field_phi = NamedTextbox(self.frame_input, text = "phi", state = "readonly")
-			self.field_phi.pack()
-
-			self.field_k = NamedTextbox(self.frame_input, text = "k", state = "readonly")
+			self.field_k = NamedTextbox(self.frame_right, text = "k", state = "normal")
 			self.field_k.pack(pady = 5)
 
-			self.field_u0 = NamedTextbox(self.frame_input, text = "u0", state = "readonly")
+			self.field_u0 = NamedTextbox(self.frame_right, text = "u0", state = "normal")
 			self.field_u0.pack()
 
-			# Блок вывода результата генерирования
-			#self.frame_output = Frame(self)
-			#self.frame_output.grid(row = 0, column = 1, padx = 5)
+			self.button_generate = Button(self, text = "Сгенерировать", command = self.action)
+			self.button_generate.pack(pady = 5)
 
-			# Содержимое блока
-			self.result = Text(self, width = 30, height = 11, state = "disabled")
-			self.result.pack(side = LEFT)
+			# Блок вывода результата генерирования
+			self.result = Text(self, width = 40, height = 9, state = "normal")
+			self.result.bind("<KeyRelease>", self.calcStat)
+			self.result.pack()
 
 		def action(self):
+			# Генератор
 			m = self.field_m.get()
-			self.master.master.frame_frequency.put(1, 2)
+			p = self.field_p.get()
+			q = self.field_q.get()
+			#phi = self.field_phi.get()
+			k = self.field_k.get()
+			u0 = self.field_u0.get()
+			N = p * q
+			phi = (p - 1) * (q - 1)
+			if not (1 < k < phi and gcd(k, phi) == 1):
+				messagebox.showerror("Ошибка", "Некорректное значение k (1 < k < %d и НОД(k, %d))" % (phi, phi))
+			if not (1 < u0 < N - 1):
+				messagebox.showerror("Ошибка", "Некорректное значение u0 (1 < u0 < %d)" % (N - 1))
+			self.put("kek")
+			self.calcStat()
 			# TODO: generator func
 
+		def calcStat(self, ev = None):
+			# Посчитать значения статистик
+			text = self.get() # текущее содержание поля с выводом последовательности
+			if re.search(r"[^01]", text) is not None:
+				messagebox.showerror("Ошибка", "В поле ввода должны быть только 0 и 1")
+				text = re.sub(r"[^01]", "", text)
+				self.put(text)
+				return
+			#print(text)
+			self.root.frame_frequency.put(1, 2)
+			self.root.frame_sequence.put(1, 1, 1)
+			self.root.frame_deviation.put([ 1 ] * 19, [ 1 ] * 19)
+
+		def get(self):
+			# Получить содержимое поля вывода последовательности
+			return self.result.get("0.0", END)[:-1]
+
 		def put(self, text):
-			self.result.config(state = "normal")
+			# Заменить текст в поле вывода последовательности
+			#self.result.config(state = "normal")
 			self.result.delete("0.0", END)
 			self.result.insert("0.0", text)
-			self.result.config(state = "disabled")
+			#self.result.config(state = "disabled")
 
 	class frequency(LabelFrame):
 		def __init__(self, *args, **kwargs):
 			kwargs["text"] = "Частотный тест"
 			super().__init__(*args, **kwargs)
+			self.root = self.master.root
 
 			# Содержимое блока
 			self.field_sn = NamedTextbox(self, text = "Sn", state = "readonly")
@@ -108,6 +153,7 @@ class app(Tk):
 		def __init__(self, *args, **kwargs):
 			kwargs["text"] = "Тест на последовательность\nодинаковых бит"
 			super().__init__(*args, **kwargs)
+			self.root = self.master.root
 
 			# Содержимое блока
 			self.field_pi = NamedTextbox(self, text = "pi", state = "readonly")
@@ -127,25 +173,53 @@ class app(Tk):
 
 	class deviation(LabelFrame):
 		def __init__(self, *args, **kwargs):
-			kwargs["text"] = "Расширенный тест на\nпроизвольные отклонения"
+			kwargs["text"] = "Расширенный тест на произвольные отклонения"
 			super().__init__(*args, **kwargs)
+			self.root = self.master.root
+
+			self.fields_ksi = list()
+			self.fields_y = list()
+			for i in range(19):
+				j = i - 9
+				self.fields_ksi.append(NamedTextbox(self, text = ("ksi[%d]" % j), state = "readonly"))
+				self.fields_ksi[-1].grid(row = i, column = 0, pady = (5 if i % 2 == 0 else 0))
+				self.fields_y.append(StatisticOutput(self, text = ("Y[%d]" % j), state = "readonly"))
+				self.fields_y[-1].grid(row = i, column = 1, pady = (5 if i % 2 == 0 else 0))
+
+		def put(self, ksi, Y):
+			# Установить поля ksi и Y одной командой
+			for i in range(19):
+				self.fields_ksi[i].put(ksi[i])
+				self.fields_y[i].put(Y[i])
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.title("RSA генератор")
 		self.resizable(False, False)
-		self.geometry("%dx%d" % (500, 500))
+		self.geometry("%dx%d" % (700, 550))
 
 		self.frame_root = Frame(self)
 		self.frame_root.pack(expand = YES, fill = BOTH)
+		self.frame_root.root = self
 
-		self.frame_generator = self.generator(self.frame_root)
-		self.frame_generator.pack(padx = 5, ipadx = 5, ipady = 10)
+		self.frame_left = Frame(self.frame_root)
+		self.frame_left.pack(side = LEFT)
+		self.frame_left.root = self
 
-		self.frame_frequency = self.frequency(self.frame_root)
+		self.frame_generator = self.generator(self.frame_left)
+		self.frame_generator.pack(padx = 5, pady = 5, ipadx = 5, ipady = 10)
+
+		self.frame_frequency = self.frequency(self.frame_left)
 		self.frame_frequency.pack(padx = 5, pady = 5, ipadx = 5, ipady = 5)
 
-		self.frame_sequence = self.sequence(self.frame_root)
+		self.frame_sequence = self.sequence(self.frame_left)
 		self.frame_sequence.pack(padx = 5, pady = 5, ipadx = 5, ipady = 5)
+
+		self.frame_right = Frame(self.frame_root)
+		self.frame_right.pack(side = LEFT)
+		self.frame_right.root = self
+
+		self.frame_deviation = self.deviation(self.frame_right)
+		self.frame_deviation.pack(padx = 5, pady = 5, ipadx = 5, ipady = 5)
 
 if __name__ == "__main__": app().mainloop()
