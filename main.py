@@ -33,7 +33,7 @@ class StatisticOutput(NamedTextbox):
 		self.entry.delete(0, END)
 		self.entry.insert(0, val)
 		#self.entry.config(bg = ("lime" if val <= 1.82 else "red"))
-		self.entry.config(readonlybackground = ("lime" if val <= 1.82 else "red"))
+		self.entry.config(readonlybackground = ("lime" if val <= 1.82138636 else "red"))
 		self.entry.config(state = "readonly")
 
 class app(Tk):
@@ -50,23 +50,23 @@ class app(Tk):
 			self.field_m = NamedTextbox(self.frame_input, text = "m", state = "normal")
 			self.field_m.pack()
 
+			self.button_generate = Button(self.frame_input, text = "Сгенерировать", command = self.action)
+			self.button_generate.pack(pady = 5)
+
 			self.field_p = NamedTextbox(self.frame_input, text = "p", state = "readonly")
-			self.field_p.pack(pady = 5)
+			self.field_p.pack()
 
 			self.field_q = NamedTextbox(self.frame_input, text = "q", state = "readonly")
-			self.field_q.pack()
+			self.field_q.pack(pady = 5)
 
 			self.field_phi = NamedTextbox(self.frame_input, text = "phi", state = "readonly")
-			self.field_phi.pack(pady = 5)
+			self.field_phi.pack()
 
 			self.field_k = NamedTextbox(self.frame_input, text = "k", state = "readonly")
-			self.field_k.pack()
+			self.field_k.pack(pady = 5)
 
 			self.field_u0 = NamedTextbox(self.frame_input, text = "u0", state = "readonly")
-			self.field_u0.pack(pady = 5)
-
-			self.button_generate = Button(self.frame_input, text = "Сгенерировать", command = self.action)
-			self.button_generate.pack()
+			self.field_u0.pack()
 
 			# Блок вывода результата генерирования
 			#self.frame_output = Frame(self)
@@ -94,21 +94,47 @@ class app(Tk):
 
 			# Содержимое блока
 			self.field_sn = NamedTextbox(self, text = "Sn", state = "readonly")
-			self.field_sn.pack()
+			self.field_sn.pack(pady = 5)
 
 			self.field_s = StatisticOutput(self, text = "S", state = "readonly")
-			self.field_s.pack(pady = 5)
+			self.field_s.pack()
 
 		def put(self, sn, s):
 			# Установить поля Sn и S одной командой
 			self.field_sn.put(sn)
 			self.field_s.put(s)
 
+	class sequence(LabelFrame):
+		def __init__(self, *args, **kwargs):
+			kwargs["text"] = "Тест на последовательность\nодинаковых бит"
+			super().__init__(*args, **kwargs)
+
+			# Содержимое блока
+			self.field_pi = NamedTextbox(self, text = "pi", state = "readonly")
+			self.field_pi.pack(pady = 5)
+
+			self.field_vn = NamedTextbox(self, text = "Vn", state = "readonly")
+			self.field_vn.pack()
+
+			self.field_s = StatisticOutput(self, text = "S", state = "readonly")
+			self.field_s.pack(pady = 5)
+
+		def put(self, pi, vn, s):
+			# Установить поля pi, Vn и S одной командой
+			self.field_pi.put(pi)
+			self.field_vn.put(vn)
+			self.field_s.put(s)
+
+	class deviation(LabelFrame):
+		def __init__(self, *args, **kwargs):
+			kwargs["text"] = "Расширенный тест на\nпроизвольные отклонения"
+			super().__init__(*args, **kwargs)
+
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.title("RSA генератор")
 		self.resizable(False, False)
-		self.geometry("%dx%d" % (500, 300))
+		self.geometry("%dx%d" % (500, 500))
 
 		self.frame_root = Frame(self)
 		self.frame_root.pack(expand = YES, fill = BOTH)
@@ -117,6 +143,9 @@ class app(Tk):
 		self.frame_generator.pack(padx = 5, ipadx = 5, ipady = 10)
 
 		self.frame_frequency = self.frequency(self.frame_root)
-		self.frame_frequency.pack(padx = 5, pady = 5, ipadx = 5, ipady = 10)
+		self.frame_frequency.pack(padx = 5, pady = 5, ipadx = 5, ipady = 5)
+
+		self.frame_sequence = self.sequence(self.frame_root)
+		self.frame_sequence.pack(padx = 5, pady = 5, ipadx = 5, ipady = 5)
 
 if __name__ == "__main__": app().mainloop()
