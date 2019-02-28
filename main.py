@@ -1,5 +1,6 @@
 import re
 import rsa
+import stattests
 from tkinter import *
 from tkinter import messagebox
 
@@ -114,6 +115,7 @@ class app(Tk):
 			phi = (p - 1) * (q - 1)
 			k = self.field_k.get()
 			if not k:
+				k = rsa.randint(2, phi - 1)
 				while rsa.gcd(k, phi) != 1:
 					k = rsa.randint(2, phi - 1)
 				self.field_k.put(k)
@@ -133,7 +135,7 @@ class app(Tk):
 				messagebox.showerror("Ошибка", "Некорректное значение u0 (1 < u0 < %d)" % (N - 1))
 			seq = rsa.generate(m, p, q, k, u0)
 			self.put(seq)
-			#self.calcStat()
+			self.calcStat()
 
 		def calcStat(self, ev = None):
 			# Посчитать значения статистик
@@ -144,9 +146,9 @@ class app(Tk):
 				self.put(text)
 				return
 			#print(text)
-			self.root.frame_frequency.put(1, 2)
-			self.root.frame_sequence.put(1, 1, 1)
-			self.root.frame_deviation.put([ 1 ] * 19, [ 1 ] * 19)
+			self.root.frame_frequency.put(*stattests.frequency(text))
+			self.root.frame_sequence.put(*stattests.sequence(text))
+			self.root.frame_deviation.put(*stattests.deviation(text))
 
 		def get(self):
 			# Получить содержимое поля вывода последовательности
