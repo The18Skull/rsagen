@@ -1,14 +1,7 @@
 import re
+import rsa
 from tkinter import *
 from tkinter import messagebox
-
-def gcd(a, b):
-	while a != b:
-		if a > b:
-			a = a - b
-		else:
-			b = b - a        
-	return a
 
 class NamedTextbox(Frame):
 	def __init__(self, *args, **kwargs):
@@ -91,21 +84,56 @@ class app(Tk):
 
 		def action(self):
 			# Генератор
+			# m
 			m = self.field_m.get()
+			if not m:
+				m = rsa.randint(10, 10000)
+				self.field_m.put(m)
+				return
+			else:
+				m = int(m)
+			# p
 			p = self.field_p.get()
+			if not p:
+				p = rsa.genprime(32)
+				self.field_p.put(p)
+			else:
+				p = int(p)
+			if not rsa.solovay_strassen(p):
+				messagebox.showerror("Ошибка", "Число p не простое")
+			# q
 			q = self.field_q.get()
-			#phi = self.field_phi.get()
-			k = self.field_k.get()
-			u0 = self.field_u0.get()
-			N = p * q
+			if not q:
+				q = rsa.genprime(32)
+				self.field_q.put(q)
+			else:
+				q = int(q)
+			if not rsa.solovay_strassen(q) or q == p:
+				messagebox.showerror("Ошибка", "Число q не простое")
+			# k
 			phi = (p - 1) * (q - 1)
-			if not (1 < k < phi and gcd(k, phi) == 1):
+			k = self.field_k.get()
+			if not k:
+				while rsa.gcd(k, phi) != 1:
+					k = rsa.randint(2, phi - 1)
+				self.field_k.put(k)
+			else:
+				k = int(k)
+			if not (1 < k < phi and rsa.gcd(k, phi) == 1):
 				messagebox.showerror("Ошибка", "Некорректное значение k (1 < k < %d и НОД(k, %d))" % (phi, phi))
+			# u0
+			N = p * q
+			u0 = self.field_u0.get()
+			if not u0:
+				u0 = rsa.randint(2, N - 2)
+				self.field_u0.put(u0)
+			else:
+				u0 = int(u0)
 			if not (1 < u0 < N - 1):
 				messagebox.showerror("Ошибка", "Некорректное значение u0 (1 < u0 < %d)" % (N - 1))
-			self.put("kek")
-			self.calcStat()
-			# TODO: generator func
+			seq = rsa.generate(m, p, q, k, u0)
+			self.put(seq)
+			#self.calcStat()
 
 		def calcStat(self, ev = None):
 			# Посчитать значения статистик
@@ -179,8 +207,10 @@ class app(Tk):
 
 			self.fields_ksi = list()
 			self.fields_y = list()
-			for i in range(19):
+			for i in range(18):
 				j = i - 9
+				if j >= 0:
+					j += 1
 				self.fields_ksi.append(NamedTextbox(self, text = ("ksi[%d]" % j), state = "readonly"))
 				self.fields_ksi[-1].grid(row = i, column = 0, pady = (5 if i % 2 == 0 else 0))
 				self.fields_y.append(StatisticOutput(self, text = ("Y[%d]" % j), state = "readonly"))
@@ -188,7 +218,7 @@ class app(Tk):
 
 		def put(self, ksi, Y):
 			# Установить поля ksi и Y одной командой
-			for i in range(19):
+			for i in range(18):
 				self.fields_ksi[i].put(ksi[i])
 				self.fields_y[i].put(Y[i])
 
